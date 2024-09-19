@@ -14,7 +14,9 @@ struct DemoAppSwiftUIApp: App {
 
     @ObservedObject var appState = AppState.shared
     @ObservedObject var notificationsHandler = NotificationsHandler.shared
-    
+
+    @State var isBroken = false
+
     var channelListController: ChatChannelListController? {
         appState.channelListController
     }
@@ -34,10 +36,26 @@ struct DemoAppSwiftUIApp: App {
                         selectedChannelId: notificationsHandler.notificationChannelId
                     )
                 } else {
-                    ChatChannelListView(
-                        viewFactory: DemoAppFactory.shared,
-                        channelListController: channelListController
-                    )
+                    if #available(iOS 16.0, *) {
+                        NavigationStack {
+                            ChatChannelListView(
+                                viewFactory: DemoAppFactory.shared,
+                                channelListController: channelListController,
+                                embedInNavigationView: false
+                            )
+                            .toolbar {
+                                ToolbarItem {
+                                    Button(!isBroken ? "Break" : "Broken") {
+                                        isBroken = true
+                                        print("You can still change the selected channel and the view model will update, but the app won't navigate to that channel.")
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // Fallback on earlier versions
+                        fatalError("I only tested this on iOS 17 and 18")
+                    }
                 }
             }
         }
